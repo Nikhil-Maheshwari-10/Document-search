@@ -18,7 +18,7 @@ services:
 
   - type: pserv
     name: qdrant
-    env: docker
+    env: image
     image: qdrant/qdrant:v1.9.1
     plan: free
     autoDeploy: true
