@@ -17,7 +17,7 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 100  
 
 QDRANT_PATH = "qdrant_data"
-QDRANT_COLLECTION = "Test Collection"
+QDRANT_COLLECTION = "My Collection"
 QDRANT_VECTOR_SIZE = 768  # Should match your embedding size
 
 # qdrant_client = QdrantClient(path=QDRANT_PATH, prefer_grpc=False)
