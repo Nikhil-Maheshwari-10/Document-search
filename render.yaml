@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: document-rag-app
+    env: python
+    buildCommand: |
+      pip install poetry
+      poetry install --no-root
+    startCommand: streamlit run src/main.py --server.port=10000 --server.address=0.0.0.0
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: QDRANT_HOST
+        value: qdrant
+      - key: QDRANT_PORT
+        value: 6333
+    plan: free
+    autoDeploy: true
+
+  - type: pserv
+    name: qdrant
+    env: docker
+    dockerfilePath: ""
+    image: qdrant/qdrant:v1.9.1
+    plan: free
+    autoDeploy: true
+    ports:
+      - 6333
+      - 6334
+    volumes:
+      - name: qdrant_data
+        mountPath: /qdrant/storage
+
+volumes:
+  - name: qdrant_data
