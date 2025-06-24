@@ -52,4 +52,4 @@ USER app
 WORKDIR /code
 
 # Entrypoint for Streamlit
-ENTRYPOINT ["streamlit", "run", "/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
