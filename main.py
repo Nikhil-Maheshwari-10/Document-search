@@ -158,8 +158,8 @@ st.header("Upload Documents")
 process_images = st.checkbox("Process images from PDFs", value=True)
 
 uploaded_files = st.file_uploader(
-    "Choose PDF files to upload",
-    type=["pdf"],
+    "Choose files to upload",
+    type=["pdf,png,jpg,jpeg,doc,docx,csv,txt"],
     accept_multiple_files=True
 )
 
