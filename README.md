@@ -1,6 +1,6 @@
 # Document Uploader & Semantic Search
 
-Welcome to the **Document Uploader & Semantic Search** app! This project provides a user-friendly interface for uploading documents (PDF, TXT, CSV, XLSX), extracting their content, and performing powerful semantic search using vector embeddings and Qdrant.
+Welcome to the **Document Uploader & Semantic Search** app! This project provides a user-friendly interface for uploading documents (PDF files only), extracting their content, and performing powerful semantic search using vector embeddings and Qdrant.
 
 ## Features
 
