@@ -5,7 +5,7 @@ Welcome to the **Document Uploader & Semantic Search** app! This project provide
 ## Features
 
 - 📄 **Upload Documents:**
-  - Supports PDF files only .
+  - Supports PDF files only.
   - Extracts text and (optionally) processes images from PDFs.
 - 🔍 **Semantic Search:**
   - Search across all uploaded documents using natural language queries.
