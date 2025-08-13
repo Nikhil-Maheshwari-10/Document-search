@@ -81,7 +81,7 @@ def process_pdf_images_and_store(uploaded_file, tmp_path, qdrant_client, QDRANT_
                 try:
                     time.sleep(4)  # Small delay to avoid rate limiting
                     llm_response = completion(
-                        model="gemini/gemini-1.5-flash",
+                        model="gemini/gemini-2.0-flash",
                         api_key=os.getenv("GEMINI_API_KEY"),
                         messages=[
                             {
