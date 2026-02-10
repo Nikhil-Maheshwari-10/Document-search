@@ -31,24 +31,26 @@ Welcome to the **Document Uploader & Semantic Search** app! This project provide
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+   git clone https://github.com/Nikhil-Maheshwari-10/Document-search.git
+   cd Document-search
    ```
-2. **Install dependencies:**
+2. **Install dependencies using Poetry:**
    ```bash
-   pip install -r requirements.txt
+   poetry install
    ```
 3. **Set up environment variables:**
    - Create a `.env` file with the following keys:
      ```env
      GEMINI_API_KEY=your_gemini_api_key
-     EMBEDDING_MODEL=your_embedding_model_name
-     QDRANT_URL=http://localhost:6333  # or your Qdrant Cloud URL
-     QDRANT_API_KEY=your_qdrant_api_key  # if using Qdrant Cloud
+     EMBEDDING_MODEL="gemini/gemini-embedding-001"
+     QDRANT_URL=your_qdrant_url
+     QDRANT_API_KEY=your_qdrant_api_key
+     EMBEDDING_DIM=768
+     QDRANT_COLLECTION="My Collection"
      ```
 4. **Run the app:**
    ```bash
-   streamlit run main.py
+   poetry run python main.py
    ```
 
 ## Usage
@@ -77,6 +79,26 @@ Welcome to the **Document Uploader & Semantic Search** app! This project provide
 - Make sure your Qdrant instance is running and accessible.
 - The app uses environment variables for API keys and configuration.
 - For image understanding, a compatible LLM (e.g., Gemini) is required.
+
+## Deployment (Streamlit Cloud)
+
+To deploy this app on Streamlit Cloud:
+
+1. **Push your code to GitHub.**
+2. **Connect to Streamlit Cloud**: Go to [share.streamlit.io](https://share.streamlit.io/) and connect your repository.
+3. **Set the Main File Path**: Set it to `main.py`.
+4. **Configure Secrets**:
+   - Streamlit Cloud does not use `.env` files. Instead, go to **Settings > Secrets** in the Streamlit Cloud dashboard.
+   - Add your environment variables in TOML format:
+     ```toml
+     GEMINI_API_KEY = "your_key..."
+     EMBEDDING_MODEL = "gemini/gemini-embedding-001"
+     QDRANT_URL = "your_url..."
+     QDRANT_API_KEY = "your_key..."
+     EMBEDDING_DIM = 768
+     QDRANT_COLLECTION = "My Collection"
+     ```
+5. **Python Version**: Ensure you select **Python 3.12** or **3.13** in the Streamlit Cloud advanced settings (avoid 3.14 unless you are sure pre-built wheels are available).
 
 ## License
 
