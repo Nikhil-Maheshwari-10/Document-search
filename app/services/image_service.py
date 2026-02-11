@@ -13,10 +13,10 @@ from app.logger import logger
 from app.services.llm_service import generate_embedding
 from app.services.vector_service import qdrant_client
 
-def process_pdf_images_and_store(uploaded_file, tmp_path):
+def process_pdf_images_and_store(uploaded_file, tmp_path, session_id):
     """Process images in a PDF, generate descriptions, and store in Qdrant"""
     doc = fitz.open(tmp_path)
-    logger.info(f"Processing PDF '{uploaded_file.name}' with {len(doc)} pages")
+    logger.info(f"Processing PDF '{uploaded_file.name}' with {len(doc)} pages (Session: {session_id})")
     
     total_images_found = 0
     pages_with_large_images = 0
@@ -94,6 +94,7 @@ def process_pdf_images_and_store(uploaded_file, tmp_path):
                             "filename": f"{uploaded_file.name}_page_{page_num+1}_fullpage",
                             "document": chunk,
                             "source_type": "image_description",
+                            "session_id": session_id,
                             "page": page_num+1,
                             "dimensions": image_dimensions
                         }

@@ -3,17 +3,84 @@ import tempfile
 import os
 import uuid
 import time
-from app.config import QDRANT_COLLECTION, RAG_CONTEXT_SIZE
+from datetime import datetime
+from app.config import QDRANT_COLLECTION, RAG_CONTEXT_SIZE, STORAGE_TIMEOUT_MINUTES
 from app.logger import logger
 from app.services.extraction_service import extract_text_from_file, create_chunks
 from app.services.llm_service import generate_embedding, get_rag_answer
-from app.services.vector_service import qdrant_client, ensure_collection, upsert_points, search_vectors, delete_collection
+from app.services.vector_service import qdrant_client, ensure_collection, upsert_points, search_vectors, delete_session_data, check_auto_cleanup, update_last_activity, get_last_activity, perform_global_cleanup
 from app.services.image_service import process_pdf_images_and_store
 from qdrant_client.http.models import PointStruct
 
+# --- Latency Optimizations ---
+
+@st.cache_resource(show_spinner="Initializing Database...")
+def init_qdrant():
+    """Ensures collection and indexes exist once per app process."""
+    ensure_collection()
+    return True
+
+def run_throttled_cleanup(session_id):
+    """Runs cleanups only when necessary to avoid blocking UI actions."""
+    # Global cleanup: Run once per browser session start
+    if 'global_cleanup_done' not in st.session_state:
+        perform_global_cleanup()
+        st.session_state.global_cleanup_done = True
+    
+    # Session cleanup: Run only if we haven't checked recently (every 5 mins)
+    now = time.time()
+    if 'last_cleanup_check' not in st.session_state or (now - st.session_state.last_cleanup_check > 300):
+        check_auto_cleanup(session_id)
+        st.session_state.last_cleanup_check = now
+
+@st.cache_data(ttl=60) # Cache for 1 minute to avoid spamming Qdrant on every click
+def cached_get_last_activity(session_id):
+    return get_last_activity(session_id)
+
 def main():
-    st.set_page_config(page_title="Document Uploader & Semantic Search", layout="wide")
+    st.set_page_config(page_title="Document Uploader & Semantic Search", layout="wide", initial_sidebar_state="collapsed")
     st.title("📄 Document Uploader & Semantic Search")
+
+    # Initialize session state for UI sync and Multi-tenancy
+    if 'session_id' not in st.session_state:
+        st.session_state.session_id = str(uuid.uuid4())
+    if 'uploader_key' not in st.session_state:
+        st.session_state.uploader_key = 0
+    if 'clear_context_msg' not in st.session_state:
+        st.session_state.clear_context_msg = False
+
+    session_id = st.session_state.session_id
+
+    # 1. Initialize DB (Cached)
+    init_qdrant()
+
+    # 2. Throttled Cleanups (Avoid blocking UI reruns)
+    run_throttled_cleanup(session_id)
+
+    # --- Sidebar: Storage Status ---
+    with st.sidebar:
+        st.header("⚙️ Storage Status")
+        last_act = cached_get_last_activity(session_id)
+        if last_act:
+            st.write(f"**Last Activity:** {datetime.fromtimestamp(last_act).strftime('%Y-%m-%d %H:%M:%S')}")
+            elapsed_min = (time.time() - last_act) / 60
+            remaining = max(0, STORAGE_TIMEOUT_MINUTES - elapsed_min)
+            
+            if remaining > 0:
+                st.info(f"⏳ Auto-clear in: **{int(remaining)} mins**")
+            else:
+                st.warning("⚠️ Storage is pending cleanup on refresh.")
+        else:
+            st.info("No active session data found.")
+        
+        st.divider()
+        st.caption(f"Session isolation is active.")
+        st.caption(f"Auto-cleanup is set to {STORAGE_TIMEOUT_MINUTES} minutes of inactivity.")
+
+    # Success message persistent across rerun
+    if st.session_state.clear_context_msg:
+        st.success("✅ Storage has been cleared.")
+        st.session_state.clear_context_msg = False
 
     # --- Upload Section ---
     st.header("Upload Documents")
@@ -23,15 +90,19 @@ def main():
     uploaded_files = st.file_uploader(
         "Choose PDF files to upload",
         type=["pdf", "txt", "csv", "xlsx"],
-        accept_multiple_files=True
+        accept_multiple_files=True,
+        key=f"uploader_{st.session_state.uploader_key}"
     )
 
     if st.button("Clear Storage"):
         try:
-            delete_collection()
-            st.success(f"Collection has been deleted.")
+            delete_session_data(session_id)
+            cached_get_last_activity.clear() # Reset UI status
+            ensure_collection() # Ensure it's ready for next use
+            st.session_state.uploader_key += 1 # Force reset uploader widget
             st.session_state.upload_complete = False
             st.session_state.uploaded_files_list = []
+            st.session_state.clear_context_msg = True
             st.rerun()
         except Exception as e:
             st.error(f"Failed to delete collection: {str(e)}")
@@ -81,7 +152,8 @@ def main():
                         payload={
                             "filename": uploaded_file.name,
                             "document": chunk,
-                            "source_type": "document"
+                            "source_type": "document",
+                            "session_id": session_id
                         }
                     ))
                 if points:
@@ -90,7 +162,7 @@ def main():
             # 3. Process images if PDF
             if process_images and file_ext.lower() == "pdf":
                 try:
-                    process_pdf_images_and_store(uploaded_file, tmp_path)
+                    process_pdf_images_and_store(uploaded_file, tmp_path, session_id)
                 except Exception as e:
                     logger.error(f"Failed to process images: {str(e)}")
 
@@ -102,10 +174,13 @@ def main():
             total_processing_time += elapsed
             
         logger.info(f"Total processing time: {total_processing_time:.2f}s")
+        update_last_activity(session_id) # Store the timestamp
+        cached_get_last_activity.clear() # Force sidebar to fetch new data
         progress_bar.empty()
         status_text.empty()
         st.success(f"✅ Successfully processed {len(uploaded_files)} file(s)")
         st.session_state.upload_complete = True
+        st.rerun()
 
     elif st.session_state.uploaded_files_list:
         st.info(f"📁 Previously uploaded: {', '.join(st.session_state.uploaded_files_list)}")
@@ -122,9 +197,11 @@ def main():
 
     if st.button("Search") and query:
         try:
-            logger.info(f"Searching for: '{query}'")
+            logger.info(f"Searching for session {session_id}: '{query}'")
+            update_last_activity(session_id) # Prolong storage life on search
+            cached_get_last_activity.clear() # Force sidebar refresh
             query_vector = generate_embedding(query)
-            results = search_vectors(query_vector, limit=10)
+            results = search_vectors(query_vector, session_id, limit=10)
             
             if results:
                 doc_results = [res for res in results if res.payload.get("source_type") == "document"]

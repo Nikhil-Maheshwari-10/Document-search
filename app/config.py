@@ -30,3 +30,4 @@ RAG_SYSTEM_PROMPT = os.getenv("RAG_SYSTEM_PROMPT")
 # App UI Configuration
 UPLOAD_FOLDER = 'files'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'csv', 'xlsx'}
+STORAGE_TIMEOUT_MINUTES = int(os.getenv("STORAGE_TIMEOUT_MINUTES"))
