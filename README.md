@@ -39,12 +39,12 @@ Follow these steps to get the app running on your local machine:
    QDRANT_URL=your_qdrant_url
    QDRANT_API_KEY=your_qdrant_api_key
 
-   EMBEDDING_DIM=3072
-   CHUNK_SIZE=1000
-   CHUNK_OVERLAP=100
+   EMBEDDING_DIM=your_embedding_dimension
+   CHUNK_SIZE=your_chunk_size
+   CHUNK_OVERLAP=your_chunk_overlap
    QDRANT_COLLECTION="your_collection_name"
-   RAG_CONTEXT_SIZE=5
-   STORAGE_TIMEOUT_MINUTES=60
+   RAG_CONTEXT_SIZE=your_rag_context_size
+   STORAGE_TIMEOUT_MINUTES=your_storage_timeout_minutes
 
    IMAGE_MODEL="your_model_name"
    RAG_MODEL="your_model_name"
@@ -73,7 +73,7 @@ Follow these steps to get the app running on your local machine:
 ### ⚙️ Storage Status (Sidebar)
 - **Live Countdown**: Keep track of your session with the countdown timer. 
 - **Auto-Refresh**: Each search or upload resets your activity timer!
-- **Note**: Data is automatically cleared after 60 minutes of inactivity to keep storage clean.
+- **Note**: Data is automatically cleared after user inactivity is detected to keep storage clean.
 
 ### 🧹 Clear Storage
 - **Instant Reset**: Click the **Clear Storage** button to immediately wipe your session data and reset the uploader for a fresh start.
