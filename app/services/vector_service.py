@@ -83,14 +83,14 @@ def search_vectors(query_vector, session_id, limit=5):
             ]
         )
         
-        search_result = qdrant_client.search(
+        search_result = qdrant_client.query_points(
             collection_name=QDRANT_COLLECTION,
-            query_vector=query_vector,
+            query=query_vector,
             query_filter=search_filter,
             limit=limit,
             with_payload=True
         )
-        return search_result
+        return search_result.points
     except Exception as e:
         logger.error(f"Error searching documents for session {session_id}: {e}")
         return []
@@ -183,6 +183,40 @@ def get_last_activity(session_id):
     except Exception as e:
         logger.warning(f"Failed to get activity for session {session_id}: {e}")
     return None
+
+def get_session_filenames(session_id):
+    """Retrieves unique filenames uploaded for a given session."""
+    try:
+        result_points, _ = qdrant_client.scroll(
+            collection_name=QDRANT_COLLECTION,
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="session_id",
+                        match=MatchValue(value=session_id)
+                    ),
+                    FieldCondition(
+                        key="source_type",
+                        match=MatchValue(value="document")
+                    )
+                ]
+            ),
+            limit=1000,
+            with_payload=True,
+            with_vectors=False
+        )
+        
+        filenames = set()
+        for point in result_points:
+            fname = point.payload.get("filename")
+            if fname:
+                filenames.add(fname)
+        
+        return sorted(list(filenames))
+
+    except Exception as e:
+        logger.error(f"Failed to retrieve filenames for session {session_id}: {e}")
+        return []
 
 def perform_global_cleanup():
     """Scans for and deletes ALL expired sessions in the whole collection."""
