@@ -16,11 +16,6 @@ Welcome! This application provides a high-performance, user-friendly interface f
 
 ## 🏗️ Architecture: RAG Pipeline
 
-![RAG Pipeline Flowchart](https://mermaid.ink/img/pako:eNp9VNtq4zAQ_RXhvioLS95c6FLitARaSJO2sGhDUa1xLCLLRpLblCT_vrr4os2G-kUjzZmjmTkjH5K8ZpCkyVbRpkTP2R-J7Kfb93CwkFvQhtcSkdFc8gYEl7AJYPe9NKKmjLxoUJ2t0R0XoDdoMrlB871RNDe1Ip3laNazPngeswwwH7RuBDcGFJmVrdxxuY2QvS-wV-_AnmFvyMPD4yXa3h9oLT88MUWlIa_gb3NHdPt_PWjywwYss7tZCfnusCic_es0wnqXIz7-Bn1Ei8oSdXUQv7mQUAzyOb1ybTtisyfBQtaM8IN7LDcDnX9XrvOflxsgINmZyCswisMHFYiM5gWRn1pQX0HjubTN1-FkM2YVEN-k5QGhZN_6NVCVl4MOfhcXHoF81Ky2F1uhuxUtFTQRvj920NXt_dtS1VVjSFicVxvV-umLgkbgEOeUcFXcgwRFL-B7LVagW2E0ybhuBP1Ct1J_gtqcdTrSwI_U0T4N27_jP_UFaC6o1hkUSIcGooILkV4VRYFt7vUO0qvpdNrZk0_OTJn-bPbXUfT4jHD_TPDwBHCUC47nEA9DhocBwqNmOE4V9y3okrxOcFKBqihnSXpITAmV-6cwKKjtTnLCSdswamDOuOVIUisCnP4CNg56LA==)
-
-<details>
-<summary>View Mermaid Source</summary>
-
 ```mermaid
 graph TD
     %% Ingestion Pipeline
@@ -57,7 +52,6 @@ graph TD
     classDef service fill:#fff,stroke:#333,stroke-width:1px;
     class Extractor,Splitter,EmbedText,StoreQdrant,ImageExtract,VisionLLM,EmbedDesc,EmbedQuery,VectorSearch,RAG_LLM service;
 ```
-</details>
 
 ---
 
