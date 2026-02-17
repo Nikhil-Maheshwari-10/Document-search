@@ -14,6 +14,53 @@ Welcome! This application provides a high-performance, user-friendly interface f
 
 ---
 
+## 🏗️ Architecture: RAG Pipeline
+
+![RAG Pipeline Flowchart](https://mermaid.ink/img/pako:eNp9VNtq4zAQ_RXhvioLS95c6FLitARaSJO2sGhDUa1xLCLLRpLblCT_vrr4os2G-kUjzZmjmTkjH5K8ZpCkyVbRpkTP2R-J7Kfb93CwkFvQhtcSkdFc8gYEl7AJYPe9NKKmjLxoUJ2t0R0XoDdoMrlB871RNDe1Ip3laNazPngeswwwH7RuBDcGFJmVrdxxuY2QvS-wV-_AnmFvyMPD4yXa3h9oLT88MUWlIa_gb3NHdPt_PWjywwYss7tZCfnusCic_es0wnqXIz7-Bn1Ei8oSdXUQv7mQUAzyOb1ybTtisyfBQtaM8IN7LDcDnX9XrvOflxsgINmZyCswisMHFYiM5gWRn1pQX0HjubTN1-FkM2YVEN-k5QGhZN_6NVCVl4MOfhcXHoF81Ky2F1uhuxUtFTQRvj920NXt_dtS1VVjSFicVxvV-umLgkbgEOeUcFXcgwRFL-B7LVagW2E0ybhuBP1Ct1J_gtqcdTrSwI_U0T4N27_jP_UFaC6o1hkUSIcGooILkV4VRYFt7vUO0qvpdNrZk0_OTJn-bPbXUfT4jHD_TPDwBHCUC47nEA9DhocBwqNmOE4V9y3okrxOcFKBqihnSXpITAmV-6cwKKjtTnLCSdswamDOuOVIUisCnP4CNg56LA==)
+
+<details>
+<summary>View Mermaid Source</summary>
+
+```mermaid
+graph TD
+    %% Ingestion Pipeline
+    subgraph Ingestion [Ingestion Pipeline]
+        style Ingestion fill:#f5faff,stroke:#0055b3,stroke-width:2px
+        Upload[User Uploads Files<br/><i>PDF, TXT, CSV, XLSX</i>] --> Extractor[<b>Extraction Service</b><br/>Extract raw text from file]
+        Extractor --> Splitter[<b>Chunking</b><br/>RecursiveCharacterTextSplitter<br/><i>Size: 1000, Overlap: 100</i>]
+        Splitter --> EmbedText[<b>LLM Service</b><br/>Generate Embeddings<br/><i>gemini-embedding-001</i>]
+        EmbedText --> StoreQdrant[<b>Vector Storage</b><br/>Upsert into Qdrant Cloud<br/><i>Payload: filename, text, source_type</i>]
+
+        %% Image processing branch
+        Upload -.-> PDFCheck{If PDF &<br/>Process Images?}
+        PDFCheck -->|Yes| ImageExtract[<b>Image Service</b><br/>Render pages with large images]
+        ImageExtract --> VisionLLM[<b>Vision LLM</b><br/>Describe visuals/charts<br/><i>gemini-2.5-flash</i>]
+        VisionLLM --> EmbedDesc[<b>LLM Service</b><br/>Embed Image Descriptions]
+        EmbedDesc --> StoreQdrant
+    end
+
+    %% Retrieval Pipeline
+    subgraph Retrieval [Retrieval Pipeline]
+        style Retrieval fill:#fff9f5,stroke:#b35900,stroke-width:2px
+        Query[User Enters Search Query] --> EmbedQuery[<b>LLM Service</b><br/>Generate Query Embedding]
+        EmbedQuery --> VectorSearch[<b>Vector Search</b><br/>Query Qdrant for Session ID]
+        VectorSearch --> Context[<b>Context Prep</b><br/>Combine top 5 text/image matches]
+        Context --> RAG_Prompt[<b>Prompt Construction</b><br/>Inject context + System Prompt]
+        RAG_Prompt --> RAG_LLM[<b>LLM Generation</b><br/>Generate final answer<br/><i>gemini-2.5-flash-lite</i>]
+        RAG_LLM --> Results[Display Answer & Source Context]
+    end
+
+    %% Connection
+    StoreQdrant -.->|Session Isolated Search| VectorSearch
+
+    %% Styling
+    classDef service fill:#fff,stroke:#333,stroke-width:1px;
+    class Extractor,Splitter,EmbedText,StoreQdrant,ImageExtract,VisionLLM,EmbedDesc,EmbedQuery,VectorSearch,RAG_LLM service;
+```
+</details>
+
+---
+
 ## 🛠️ Setup Instructions
 
 Follow these steps to get the app running on your local machine:
